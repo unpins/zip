@@ -111,55 +111,15 @@ let
           $OBJCOPY --redefine-syms="multicall/$t.redef" "multicall/$t.o"
       done
 
-      # Dispatcher: basename(argv[0]) → <tool>_main, with a `zip <applet>`
-      # fallback so the bare binary stays callable and survives a rename
-      # (CI smoke copies it to smoke.exe).
-      {
-        echo '#include <string.h>'
-        echo '#include <stdio.h>'
-        for t in $TOOLS; do echo "int ''${t}_main(int, char **);"; done
-        echo 'struct applet { const char *name; int (*fn)(int, char **); };'
-        echo 'static const struct applet applets[] = {'
-        for t in $TOOLS; do echo "    {\"$t\", ''${t}_main},"; done
-        cat <<'CBODY'
-    {0, 0}
-};
-static void base_of(char *dst, size_t cap, const char *src) {
-    const char *p = src, *s;
-    s = strrchr(p, '/'); if (s) p = s + 1;
-#ifdef _WIN32
-    s = strrchr(p, '\\'); if (s) p = s + 1;
-#endif
-    size_t n = strlen(p); if (n >= cap) n = cap - 1;
-    memcpy(dst, p, n); dst[n] = 0;
-    if (n > 4 && strcmp(dst + n - 4, ".exe") == 0) dst[n - 4] = 0;
-}
-static int usage(const char *a0) {
-    fprintf(stderr, "zip: multicall binary; usage: %s <applet> [args]\n", a0);
-    fprintf(stderr, "applets:");
-    for (const struct applet *a = applets; a->name; a++)
-        fprintf(stderr, " %s", a->name);
-    fprintf(stderr, "\n");
-    return 1;
-}
-int main(int argc, char **argv) {
-    char base[64];
-    const char *a0 = (argc > 0 && argv[0]) ? argv[0] : "zip";
-    base_of(base, sizeof base, a0);
-    if (strcmp(base, "zip") != 0) {
-        for (const struct applet *a = applets; a->name; a++)
-            if (strcmp(base, a->name) == 0) return a->fn(argc, argv);
-    }
-    /* argv[0] is `zip` (or unknown): allow `zip <applet> [args]`, else run zip. */
-    if (argc >= 2) {
-        base_of(base, sizeof base, argv[1]);
-        for (const struct applet *a = applets; a->name; a++)
-            if (strcmp(base, a->name) == 0) return a->fn(argc - 1, argv + 1);
-    }
-    return zip_main(argc, argv);
-}
-CBODY
-      } > multicall/dispatcher.c
+      # Dispatcher (shared canonical generator — see nix-lib
+      # lib.multicallDispatcherC). apps.list carries all four tool mains; a
+      # bare/unknown invocation runs zip (defaultApplet). Behaviour note: `zip`
+      # is itself an applet, so `zip <applet>` (the canonical name as argv[0])
+      # now runs zip with "<applet>" as a filename rather than dispatching — the
+      # applet shims (zipnote/…) and a renamed binary's `<name> <applet>` form
+      # both still dispatch; only the literal `zip zipnote` meta-form changed.
+      printf '%s\n' $TOOLS > multicall/apps.list
+${lib.multicallDispatcherC { name = "zip"; defaultApplet = "zip"; }}
       $CC -O2 -c -o multicall/dispatcher.o multicall/dispatcher.c
 
       # Final link: reuse the configure-resolved link flags; the pkgsStatic /
