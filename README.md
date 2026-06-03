@@ -9,21 +9,22 @@ Standalone build of [Info-ZIP zip](https://infozip.sourceforge.net/Zip.html).
 
 Part of the [unpins](https://unpins.org) project — native single-binary builds with no third-party runtime dependencies.
 
-## Installation
+## Usage
 
-Install with [unpin](https://github.com/unpins/unpin):
-
-```bash
-unpin zip
-```
-
-Or run without installing:
+Run a program with [unpin](https://github.com/unpins/unpin):
 
 ```bash
-unpin run zip
+unpin zip -r out.zip dir/
+unpin zip zipnote out.zip
 ```
 
-`unpin install` creates the multicall aliases (`zipcloak`, `zipnote`, `zipsplit`) alongside `zip`. Each alias dispatches via `argv[0]` to the same binary.
+To install the programs onto your PATH:
+
+```bash
+unpin install zip
+```
+
+`unpin install zip` also creates the `zipcloak`, `zipnote`, `zipsplit` commands.
 
 ## Build locally
 
