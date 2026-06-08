@@ -1,13 +1,13 @@
 # zip
 
-Standalone build of [Info-ZIP zip](https://infozip.sourceforge.net/Zip.html).
+[Info-ZIP zip](https://infozip.sourceforge.net/Zip.html) as a single self-contained binary, built natively for Linux, macOS, and Windows.
 
 [![CI](https://github.com/unpins/zip/actions/workflows/zip.yml/badge.svg)](https://github.com/unpins/zip/actions)
 ![Linux](https://img.shields.io/badge/Linux-✓-success?logo=linux&logoColor=white)
 ![macOS](https://img.shields.io/badge/macOS-✓-success?logo=apple&logoColor=white)
 ![Windows](https://img.shields.io/badge/Windows-✓-success?logo=windows&logoColor=white)
 
-Part of the [unpins](https://unpins.org) project — native single-binary builds with no third-party runtime dependencies.
+Part of the [unpins](https://unpins.org) catalog; install it with [`unpin`](https://github.com/unpins/unpin): `unpin install zip`.
 
 ## Usage
 
@@ -26,6 +26,10 @@ unpin install zip
 
 `unpin install zip` also creates the `zipcloak`, `zipnote`, `zipsplit` commands.
 
+## Man pages
+
+The man pages for `zip`, `zipcloak`, `zipnote` and `zipsplit` are embedded in
+the binary; read one with `unpin man zip`, e.g. `unpin man zip zipnote`.
 ## Build locally
 
 ```bash
@@ -58,7 +62,3 @@ The [Releases](https://github.com/unpins/zip/releases) page has standalone binar
   rather than mingw: Info-ZIP's `unix/Makefile` is Unix-only (`ttyio.c` needs
   `<sys/ioctl.h>`), and its separate `win32` makefile is a different port.
 
-## Man pages
-
-The man pages for `zip`, `zipcloak`, `zipnote` and `zipsplit` are embedded in
-the binary; read one with `unpin man zip`, e.g. `unpin man zip zipnote`.
