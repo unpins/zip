@@ -22,9 +22,27 @@
       # `zip -v` prints the Info-ZIP banner on every platform.
       smoke = [ "-v" ];
       smokePattern = "Info-ZIP";
-      build = pkgs:
-        import ./multicall.nix { lib = pkgs.lib // ulib; }
-          { inherit pkgs; zip = pkgs.pkgsStatic.zip; };
+
+      # Build via the unpin-llvm engine + emit a bitcode multicall module. The
+      # standalone self-folds zip + zipnote/zipcloak/zipsplit into one
+      # dispatcher binary from the captured module.bc; the old ld-r/objcopy
+      # fold in ./multicall.nix can't run on the engine's -flto bitcode objects,
+      # so it's reserved for the Windows (cosmo) path. Info-ZIP builds four
+      # separate real executables, so we list all four programs.
+      engine = "unpin-llvm";
+      multicall = {
+        programs = [
+          { name = "zip"; }
+          { name = "zipnote"; }
+          { name = "zipcloak"; }
+          { name = "zipsplit"; }
+        ];
+      };
+      # linux + darwin both self-fold through the engine (bitcode module), like
+      # coreutils — no hand-rolled ld-r/objcopy fold (that recipe is ELF-only
+      # and doesn't port to Mach-O). Windows still uses ./multicall.nix. zip
+      # builds no shared lib, so no --disable-shared dance is needed on darwin.
+      build = pkgs: pkgs.pkgsStatic.zip;
       windowsBuild = pkgs:
         import ./multicall.nix { lib = pkgs.lib // ulib; }
           { inherit pkgs; zip = (ulib.cosmoStaticCross pkgs).zip; };

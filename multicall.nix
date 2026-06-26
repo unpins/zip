@@ -112,14 +112,15 @@ let
       done
 
       # Dispatcher (shared canonical generator — see nix-lib
-      # lib.multicallDispatcherC). apps.list carries all four tool mains; a
-      # bare/unknown invocation runs zip (defaultApplet). Behaviour note: `zip`
-      # is itself an applet, so `zip <applet>` (the canonical name as argv[0])
-      # now runs zip with "<applet>" as a filename rather than dispatching — the
-      # applet shims (zipnote/…) and a renamed binary's `<name> <applet>` form
-      # both still dispatch; only the literal `zip zipnote` meta-form changed.
-      printf '%s\n' $TOOLS > multicall/apps.list
-${lib.multicallDispatcherC { name = "zip"; defaultApplet = "zip"; }}
+      # lib.multicallTableDispatcherC). applets.list is a TSV (applet<TAB>symbol;
+      # symbol == applet here) carrying all four tool mains; a bare/unknown
+      # invocation runs zip (defaultApplet). Behaviour note: `zip` is itself an
+      # applet, so `zip <applet>` (the canonical name as argv[0]) now runs zip
+      # with "<applet>" as a filename rather than dispatching — the applet shims
+      # (zipnote/…) and a renamed binary's `<name> <applet>` form both still
+      # dispatch; only the literal `zip zipnote` meta-form changed.
+      for t in $TOOLS; do printf '%s\t%s\n' "$t" "$t"; done > multicall/applets.list
+${lib.multicallTableDispatcherC { name = "zip"; defaultApplet = "zip"; }}
       $CC -O2 -c -o multicall/dispatcher.o multicall/dispatcher.c
 
       # Final link: reuse the configure-resolved link flags; the pkgsStatic /
