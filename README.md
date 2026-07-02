@@ -61,4 +61,5 @@ The [Releases](https://github.com/unpins/zip/releases) page has standalone binar
 - **Windows** is built with [Cosmopolitan](https://github.com/jart/cosmopolitan)
   rather than mingw: Info-ZIP's `unix/Makefile` is Unix-only (`ttyio.c` needs
   `<sys/ioctl.h>`), and its separate `win32` makefile is a different port.
+- **Tests:** Info-ZIP zip ships no automated `make check` suite, so there is nothing to wire; the release smoke test runs `zip -v`.
 
