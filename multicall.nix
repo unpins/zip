@@ -29,7 +29,7 @@
 # Shared by the native `build` (pkgsStatic ELF / Mach-O) and the `windowsBuild`
 # (Cosmopolitan APE) paths.
 { lib }:
-{ pkgs, zip }:
+{ pkgs, zip, winTable }:
 let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin or false;
   isWindows = pkgs.stdenv.hostPlatform.isWindows or false;
@@ -111,16 +111,12 @@ let
           $OBJCOPY --redefine-syms="multicall/$t.redef" "multicall/$t.o"
       done
 
-      # Dispatcher (shared canonical generator — see nix-lib
-      # lib.multicallTableDispatcherC). applets.list is a TSV (applet<TAB>symbol;
-      # symbol == applet here) carrying all four tool mains; a bare/unknown
-      # invocation runs zip (defaultApplet). Behaviour note: `zip` is itself an
-      # applet, so `zip <applet>` (the canonical name as argv[0]) now runs zip
-      # with "<applet>" as a filename rather than dispatching — the applet shims
-      # (zipnote/…) and a renamed binary's `<name> <applet>` form both still
-      # dispatch; only the literal `zip zipnote` meta-form changed.
-      for t in $TOOLS; do printf '%s\t%s\n' "$t" "$t"; done > multicall/applets.list
-${lib.multicallTableDispatcherC { name = "zip"; defaultApplet = "zip"; }}
+      # applets.list + dispatcher.c, both rendered from the ONE table the flake
+      # declares. `zip` is itself a program, so the table's naming rule runs it
+      # on a bare or unknown invocation; the literal `zip zipnote` meta-form
+      # therefore zips a file called "zipnote", while the applet shims and a
+      # renamed binary's `--unpin-program=` form both still dispatch.
+${winTable.emit { }}
       $CC -O2 -c -o multicall/dispatcher.o multicall/dispatcher.c
 
       # Final link: reuse the configure-resolved link flags; the pkgsStatic /
@@ -148,7 +144,10 @@ ${lib.multicallTableDispatcherC { name = "zip"; defaultApplet = "zip"; }}
   aliased = lib.withAliases pkgs
     {
       primary = "zip";
-      aliasesFromSymlinksIn = "bin";
+      # The dispatcher's whole table, not the symlinks it happens to have made:
+      # harvesting dropped `zip` itself and shipped a list one name shorter than
+      # what the binary answers to.
+      aliases = winTable.announced;
     }
     multicall;
 in

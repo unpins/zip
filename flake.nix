@@ -15,7 +15,21 @@
   # (ttyio.c needs <sys/ioctl.h>), and the official win32 makefile is a separate
   # port; Cosmopolitan libc provides the Unix headers so the unix path builds.
   outputs = { self, unpins-lib }:
-    let ulib = unpins-lib.lib; in
+    let
+      ulib = unpins-lib.lib;
+      # The windows fold's whole dispatch table, declared once: ./multicall.nix
+      # renders applets.list and the dispatcher from it, `withAliases` announces
+      # it, and `multicall.windowsTable` hands the same value to CI. `zip` is in
+      # the table because the binary answers to it, which is also what makes a
+      # bare `zip.exe` zip instead of listing.
+      programs = [
+        { name = "zip"; }
+        { name = "zipnote"; }
+        { name = "zipcloak"; }
+        { name = "zipsplit"; }
+      ];
+      winTable = ulib.multicallTableOf { name = "zip"; inherit programs; };
+    in
     ulib.mkStandaloneFlake {
       inherit self;
       name = "zip";
@@ -31,12 +45,8 @@
       # separate real executables, so we list all four programs.
       engine = "unpin-llvm";
       multicall = {
-        programs = [
-          { name = "zip"; }
-          { name = "zipnote"; }
-          { name = "zipcloak"; }
-          { name = "zipsplit"; }
-        ];
+        inherit programs;
+        windowsTable = winTable;
       };
       # linux + darwin both self-fold through the engine (bitcode module), like
       # coreutils — no hand-rolled ld-r/objcopy fold (that recipe is ELF-only
@@ -45,6 +55,6 @@
       build = pkgs: pkgs.pkgsStatic.zip;
       windowsBuild = pkgs:
         import ./multicall.nix { lib = pkgs.lib // ulib; }
-          { inherit pkgs; zip = (ulib.cosmoStaticCross pkgs).zip; };
+          { inherit pkgs winTable; zip = (ulib.cosmoStaticCross pkgs).zip; };
     };
 }
