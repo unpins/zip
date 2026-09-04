@@ -15,7 +15,7 @@ Run a program with [unpin](https://github.com/unpins/unpin):
 
 ```bash
 unpin zip -r out.zip dir/
-unpin zip zipnote out.zip
+unpin zip --unpin-program=zipnote out.zip
 ```
 
 To install the programs onto your PATH:
@@ -30,6 +30,7 @@ unpin install zip
 
 The man pages for `zip`, `zipcloak`, `zipnote` and `zipsplit` are embedded in
 the binary; read one with `unpin man zip`, e.g. `unpin man zip zipnote`.
+
 ## Build locally
 
 ```bash
